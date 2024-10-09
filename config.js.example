@@ -1,0 +1,4 @@
+export const config = { 
+    INFURA_KEY: 'key',
+    TRC20_ADDRESS: 'contract_address'
+}
