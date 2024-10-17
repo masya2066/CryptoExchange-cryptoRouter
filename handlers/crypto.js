@@ -7,7 +7,7 @@ import {ethers} from 'ethers'
 import * as bitcoin from 'bitcoinjs-lib';
 import {config} from '../config.js'
 import {TronWeb} from 'tronweb';
-import { json } from 'express';
+import {exec} from 'child_process'
 
 const secp256k1 = new ec.ec('secp256k1');
 
@@ -23,6 +23,15 @@ export function InitApi(app) {
     routes.getBtcBalance(app)
     routes.getEthBalance(app)
     routes.getTrc20Balance(app)
+    routes.getCosts(app)
+    routes.getBitcoinInfo(app)
+    routes.getEthereumInfo(app)
+    routes.getUsdtInfo(app)
+    routes.getRippleInfo(app)
+    routes.getSolanaInfo(app)
+    routes.getCardanoInfo(app)
+    routes.getAvalancheInfo(app)
+    routes.getBnbInfo(app)
 }
 
 const routes = {
@@ -141,15 +150,13 @@ const routes = {
             const { address } = req.body;
             if (address && typeof address === 'string') {
                 try {
-                    // Make a GET request to Blockchair API to fetch balance
-                    const response = await axios.get(`https://blockchain.info/rawaddr/${address}`);
+                    // Make a GET request to BlockCypher API to fetch balance
+                    const response = await axios.get(`https://api.blockcypher.com/v1/btc/main/addrs/${address}/balance`);
                     
-                    // The balance is in satoshis (1 BTC = 100,000,000 satoshis)
-
-                    console.log(response.data)
                     const balanceInSatoshis = response.data.final_balance;
                     const balanceInBTC = balanceInSatoshis === 0 ? 0.00 : (balanceInSatoshis / 100000000).toFixed(10).replace(/\.?0+$/, '');
-                    console.log(`Bitcoin balance for ${address}: ${balanceInSatoshis} BTC`);
+                    
+                    console.log(`Bitcoin balance for ${address}: ${balanceInBTC} BTC`);
                     
                     res.status(200).send({
                         address: address,
@@ -162,7 +169,7 @@ const routes = {
                 }
             } else {
                 res.status(400).send({
-                    error: "Invalid mnemonic phrase."
+                    error: "Invalid Bitcoin address."
                 });
             }
         });
@@ -224,5 +231,295 @@ const routes = {
                 });
             }
         });
-    }
+    },
+    getCosts: (app) => {
+        app.get('/api/crypto_costs', async (req, res) => {
+    
+            const curlCommand = `curl -s "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,tether,solana,cardano,ripple,binancecoin,avalanche-2&vs_currencies=usd"`;
+
+            exec(curlCommand, (error, stdout, stderr) => {
+                if (error) {
+                console.error(`Error executing curl command: ${error.message}`);
+                return;
+                }
+                if (stderr) {
+                console.error(`Error in curl response: ${stderr}`);
+                return;
+                }
+                
+                // Parse the JSON response
+                const response = JSON.parse(stdout);
+                
+                // Get prices of BTC, ETH, and USDT (TRC-20)
+                const bitcoinPrice = response.bitcoin.usd;
+                const ethereumPrice = response.ethereum.usd;
+                const tetherPrice = response.tether.usd;
+                const avalanchePrice = response['avalanche-2'].usd;
+                const solanaPrice = response.solana.usd;
+                const cardanoPrice = response.cardano.usd;
+                const ripplePrice = response.ripple.usd;
+                const binancePrice = response.binancecoin.usd;
+
+
+                res.status(200).send({
+                    btc: bitcoinPrice,
+                    eth: ethereumPrice,
+                    usdt: tetherPrice,
+                    cardano: cardanoPrice,
+                    xrp: ripplePrice,
+                    avalanche: avalanchePrice,
+                    solana: solanaPrice,
+                    bnb: binancePrice
+                });
+            });            
+        });
+    },
+
+    getBitcoinInfo: (app) => {
+        app.get('/api/bitcoin_info', async (req, res) => {
+    
+            const curlCommand = `curl -s "https://api.coingecko.com/api/v3/coins/bitcoin"`;
+
+            exec(curlCommand, (error, stdout, stderr) => {
+                if (error) {
+                console.error(`Error executing curl command: ${error.message}`);
+                return;
+                }
+                if (stderr) {
+                console.error(`Error in curl response: ${stderr}`);
+                return;
+                }
+                
+                const response = JSON.parse(stdout);
+                
+                 const price = response.market_data.current_price.usd
+                 const market_cap = response.market_data.market_cap.usd
+                 const change = response.market_data.price_change_percentage_24h
+
+
+                res.status(200).send({
+                    usd_price: price,
+                    market_cap: market_cap,
+                    change_24h: change
+                });
+            });            
+        });
+    },
+
+    getEthereumInfo: (app) => {
+        app.get('/api/ethereum_info', async (req, res) => {
+    
+            const curlCommand = `curl -s "https://api.coingecko.com/api/v3/coins/ethereum"`;
+
+            exec(curlCommand, (error, stdout, stderr) => {
+                if (error) {
+                console.error(`Error executing curl command: ${error.message}`);
+                return;
+                }
+                if (stderr) {
+                console.error(`Error in curl response: ${stderr}`);
+                return;
+                }
+                
+                const response = JSON.parse(stdout);
+                
+                 const price = response.market_data.current_price.usd
+                 const market_cap = response.market_data.market_cap.usd
+                 const change = response.market_data.price_change_percentage_24h
+
+
+                res.status(200).send({
+                    usd_price: price,
+                    market_cap: market_cap,
+                    change_24h: change
+                });
+            });            
+        });
+    },
+
+    getRippleInfo: (app) => {
+        app.get('/api/ripple_info', async (req, res) => {
+    
+            const curlCommand = `curl -s "https://api.coingecko.com/api/v3/coins/ripple"`;
+
+            exec(curlCommand, (error, stdout, stderr) => {
+                if (error) {
+                console.error(`Error executing curl command: ${error.message}`);
+                return;
+                }
+                if (stderr) {
+                console.error(`Error in curl response: ${stderr}`);
+                return;
+                }
+                
+                const response = JSON.parse(stdout);
+                
+                 const price = response.market_data.current_price.usd
+                 const market_cap = response.market_data.market_cap.usd
+                 const change = response.market_data.price_change_percentage_24h
+
+
+                res.status(200).send({
+                    usd_price: price,
+                    market_cap: market_cap,
+                    change_24h: change
+                });
+            });            
+        });
+    },
+
+    getUsdtInfo: (app) => {
+        app.get('/api/usdt_info', async (req, res) => {
+    
+            const curlCommand = `curl -s "https://api.coingecko.com/api/v3/coins/tether"`;
+
+            exec(curlCommand, (error, stdout, stderr) => {
+                if (error) {
+                console.error(`Error executing curl command: ${error.message}`);
+                return;
+                }
+                if (stderr) {
+                console.error(`Error in curl response: ${stderr}`);
+                return;
+                }
+                
+                const response = JSON.parse(stdout);
+                
+                 const price = response.market_data.current_price.usd
+                 const market_cap = response.market_data.market_cap.usd
+                 const change = response.market_data.price_change_percentage_24h
+
+
+                res.status(200).send({
+                    usd_price: price,
+                    market_cap: market_cap,
+                    change_24h: change
+                });
+            });            
+        });
+    },
+
+    getSolanaInfo: (app) => {
+        app.get('/api/solana_info', async (req, res) => {
+    
+            const curlCommand = `curl -s "https://api.coingecko.com/api/v3/coins/solana"`;
+
+            exec(curlCommand, (error, stdout, stderr) => {
+                if (error) {
+                console.error(`Error executing curl command: ${error.message}`);
+                return;
+                }
+                if (stderr) {
+                console.error(`Error in curl response: ${stderr}`);
+                return;
+                }
+                
+                const response = JSON.parse(stdout);
+                
+                 const price = response.market_data.current_price.usd
+                 const market_cap = response.market_data.market_cap.usd
+                 const change = response.market_data.price_change_percentage_24h
+
+
+                res.status(200).send({
+                    usd_price: price,
+                    market_cap: market_cap,
+                    change_24h: change
+                });
+            });            
+        });
+    },
+
+    getCardanoInfo: (app) => {
+        app.get('/api/cardano_info', async (req, res) => {
+    
+            const curlCommand = `curl -s "https://api.coingecko.com/api/v3/coins/cardano"`;
+
+            exec(curlCommand, (error, stdout, stderr) => {
+                if (error) {
+                console.error(`Error executing curl command: ${error.message}`);
+                return;
+                }
+                if (stderr) {
+                console.error(`Error in curl response: ${stderr}`);
+                return;
+                }
+                
+                const response = JSON.parse(stdout);
+                
+                 const price = response.market_data.current_price.usd
+                 const market_cap = response.market_data.market_cap.usd
+                 const change = response.market_data.price_change_percentage_24h
+
+
+                res.status(200).send({
+                    usd_price: price,
+                    market_cap: market_cap,
+                    change_24h: change
+                });
+            });            
+        });
+    },
+
+    getBnbInfo: (app) => {
+        app.get('/api/bnb_info', async (req, res) => {
+    
+            const curlCommand = `curl -s "https://api.coingecko.com/api/v3/coins/binancecoin"`;
+
+            exec(curlCommand, (error, stdout, stderr) => {
+                if (error) {
+                console.error(`Error executing curl command: ${error.message}`);
+                return;
+                }
+                if (stderr) {
+                console.error(`Error in curl response: ${stderr}`);
+                return;
+                }
+                
+                const response = JSON.parse(stdout);
+                
+                 const price = response.market_data.current_price.usd
+                 const market_cap = response.market_data.market_cap.usd
+                 const change = response.market_data.price_change_percentage_24h
+
+
+                res.status(200).send({
+                    usd_price: price,
+                    market_cap: market_cap,
+                    change_24h: change
+                });
+            });            
+        });
+    },
+
+    getAvalancheInfo: (app) => {
+        app.get('/api/avalanche_info', async (req, res) => {
+    
+            const curlCommand = `curl -s "https://api.coingecko.com/api/v3/coins/avalanche-2"`;
+
+            exec(curlCommand, (error, stdout, stderr) => {
+                if (error) {
+                console.error(`Error executing curl command: ${error.message}`);
+                return;
+                }
+                if (stderr) {
+                console.error(`Error in curl response: ${stderr}`);
+                return;
+                }
+                
+                const response = JSON.parse(stdout);
+                
+                 const price = response.market_data.current_price.usd
+                 const market_cap = response.market_data.market_cap.usd
+                 const change = response.market_data.price_change_percentage_24h
+
+
+                res.status(200).send({
+                    usd_price: price,
+                    market_cap: market_cap,
+                    change_24h: change
+                });
+            });            
+        });
+    },
 }
